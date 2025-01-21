@@ -18,6 +18,15 @@ use reqwest::blocking::Response;
 use hmac_sha256::HMAC;
 use base16::decode;
 
+#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone)]
+pub struct Subscription {
+    pub expiry: String,
+    pub key: String,
+    pub subscription: String,
+    pub timeleft: i64
+}
+
 /// every function in this struct (accept log) returns a Result and Err("Request was tampered with") will be returned if the request signature doesnt mathc the sha256 hmac of the message
 #[derive(Debug, Clone)]
 pub struct KeyauthApi {
@@ -39,7 +48,7 @@ pub struct KeyauthApi {
     pub hwid: String,
     pub create_date: String,
     pub last_login: String,
-    pub subscription: String,
+    pub subscriptions: Vec<Subscription>,
     pub sub_time_left: i64,
     pub expiry: String,
     pub message: String,
@@ -70,7 +79,7 @@ impl KeyauthApi {
             hwid: machine_uuid::get(),
             create_date: String::new(),
             last_login: String::new(),
-            subscription: String::new(),
+            subscriptions: Vec::new(),
             sub_time_left: 0,
             expiry: String::new(),
             message: String::new(),
@@ -196,7 +205,7 @@ impl KeyauthApi {
             self.ip = json_rep["info"]["ip"].as_str().unwrap().to_string();
             self.create_date = json_rep["info"]["createdate"].as_str().unwrap().to_string();
             self.last_login = json_rep["info"]["lastlogin"].as_str().unwrap().to_string();
-            self.subscription = json_rep["info"]["subscriptions"][0]["subscription"].as_str().unwrap().to_string();
+            self.subscriptions = serde_json::from_value(json_rep["info"]["subscriptions"].clone()).unwrap();
             self.sub_time_left = json_rep["info"]["subscriptions"][0]["timeleft"].as_i64().unwrap();
             self.expiry = json_rep["info"]["subscriptions"][0]["expiry"].as_str().unwrap().to_string();
             Ok(())
@@ -297,7 +306,7 @@ impl KeyauthApi {
             self.hwid = hwidd;
             self.create_date = json_rep["info"]["createdate"].as_str().unwrap().to_string();
             self.last_login = json_rep["info"]["lastlogin"].as_str().unwrap().to_string();
-            self.subscription = json_rep["info"]["subscriptions"][0]["subscription"].as_str().unwrap().to_string();
+            self.subscriptions = serde_json::from_value(json_rep["info"]["subscriptions"].clone()).unwrap();
             self.sub_time_left = json_rep["info"]["subscriptions"][0]["timeleft"].as_i64().unwrap();
             self.expiry = json_rep["info"]["subscriptions"][0]["expiry"].as_str().unwrap().to_string();
             Ok(())
@@ -354,7 +363,7 @@ impl KeyauthApi {
             self.hwid = hwidd;
             self.create_date = json_rep["info"]["createdate"].as_str().unwrap().to_string();
             self.last_login = json_rep["info"]["lastlogin"].as_str().unwrap().to_string();
-            self.subscription = json_rep["info"]["subscriptions"][0]["subscription"].as_str().unwrap().to_string();
+            self.subscriptions = serde_json::from_value(json_rep["info"]["subscriptions"].clone()).unwrap();
             self.sub_time_left = json_rep["info"]["subscriptions"][0]["timeleft"].as_i64().unwrap();
             self.expiry = json_rep["info"]["subscriptions"][0]["expiry"].as_str().unwrap().to_string();
             Ok(())
@@ -934,7 +943,7 @@ impl KeyauthApi {
                     self.hwid = hwidd;
                     self.create_date = json_rep["info"]["createdate"].as_str().unwrap().to_string();
                     self.last_login = json_rep["info"]["lastlogin"].as_str().unwrap().to_string();
-                    self.subscription = json_rep["info"]["subscriptions"][0]["subscription"].as_str().unwrap().to_string();
+                    self.subscriptions = serde_json::from_value(json_rep["info"]["subscriptions"].clone()).unwrap();
 
                     (420, "SHEESH")
                 } else {
